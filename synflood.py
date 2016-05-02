@@ -20,8 +20,6 @@ from threading import *
 from argparse import ArgumentParser
 from termcolor import colored,cprint
 import sys,time,os
-import Queue
-
 
 
 def checksum(msg):

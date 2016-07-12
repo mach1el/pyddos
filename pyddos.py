@@ -19,7 +19,6 @@ import os
 import sys
 import json
 import time
-import Queue
 import string
 import httplib,urlparse
 from random import *

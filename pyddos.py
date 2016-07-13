@@ -37,9 +37,10 @@ except:
 			print '[+] Termcolor,requests have been installed'
 		elif os.name != 'posix':
 			os.system('pip install termcolor')
+			os.system('pip install requests')
 			print '[+] Termcolor has been installed'
 		else:
-			print '[-] Download and install termcolor'
+			print '[-] Download and install requests,termcolor'
 	except Exception,e:
 		print '[-]',e
 

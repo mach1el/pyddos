@@ -35,7 +35,7 @@ except:
 			os.system('sudo pip install termcolor')
 			os.system('sudo pip install reuqests')
 			print '[+] Termcolor,requests have been installed'
-		elif os.name != 'posix':
+		elif os.name == 'nt':
 			os.system('pip install termcolor')
 			os.system('pip install requests')
 			print '[+] Termcolor has been installed'

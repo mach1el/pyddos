@@ -26,6 +26,15 @@ from socket import *
 from struct import *
 from threading import *
 from argparse import ArgumentParser,RawTextHelpFormatter
+
+if os.name == 'posix':
+	c = os.system('which pip')
+	if c == 256:
+		os.system('sudo apt-get install python-pip')
+	else:
+		pass
+else:
+	print '[-] Check your pip installer'
 try:
 	import requests
 	from termcolor import colored,cprint

@@ -36,22 +36,26 @@ if os.name == 'posix':
 else:
 	print '[-] Check your pip installer'
 try:
-	import requests
+	import requests,colorama
 	from termcolor import colored,cprint
 except:
 	try:
 		if os.name == 'posix':
+			os.system('sudo pip install colorama')
 			os.system('sudo pip install termcolor')
 			os.system('sudo pip install reuqests')
 			print '[+] Termcolor,requests have been installed'
 		elif os.name == 'nt':
-			os.system('pip install termcolor')
-			os.system('pip install requests')
+			os.sytem('c:\python27\scripts\pip.exe install colorama')
+			os.system('c:\python27\scripts\pip.exe install termcolor')
+			os.system('c:\python27\scripts\pip.exe install requests')
 			print '[+] Termcolor has been installed'
 		else:
 			print '[-] Download and install requests,termcolor'
 	except Exception,e:
 		print '[-]',e
+if os.name == 'nt':
+	colorama.init()
 
 screenLock=Semaphore(value=99999)
 

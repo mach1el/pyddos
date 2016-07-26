@@ -15,7 +15,7 @@
     _|    \__, |____/ ____/ \___/ ____/ _____/ \___|_|   _| .__/ \__|  
            ____/                                            _|         
            
-    usage: ./pyddos -t [target] -p [port] -t [number threads]
+    usage: ./pyddos -t [target] [option]
 
     optional arguments:
     -h, --help       show this help message and exit

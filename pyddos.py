@@ -440,7 +440,7 @@ Example:
 				worker.doconnection()
 			except KeyboardInterrupt:
 				sys.exit(cprint('[-] Canceled by user','red'))
-	if not (args.synflood) and not (args.request) and not (args.pyslow):
+	if not (args.Synflood) and not (args.Request) and not (args.Pyslow):
 		parser.print_help()
 		print
 		sys.exit(cprint('[-] You must choose attack type','red'))

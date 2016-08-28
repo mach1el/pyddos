@@ -16,16 +16,16 @@
 
 # Usage
        
-          _ \        __ \  __ \               ___|           _)       |   
+      _ \        __ \  __ \               ___|           _)       |   
      |   | |   | |   | |   |  _ \   __| \___ \   __|  __| | __ \  __|  
      ___/  |   | |   | |   | (   |\__ \       | (    |    | |   | |   
     _|    \__, |____/ ____/ \___/ ____/ _____/ \___|_|   _| .__/ \__|  
            ____/                                            _|         
                                                                
- DDos python script | Script used for testing ddos | Ddos attack     
- Author: ___T7hM1___                                                
- Github: http://github.com/t7hm1/pyddos                             
- Version:2.0 
+        DDos python script | Script used for testing ddos | Ddos attack     
+         Author: ___T7hM1___                                                
+         Github: http://github.com/t7hm1/pyddos                             
+        Version:2.0 
 
     usage: ./pyddos -t [target] -p [port] -t [number threads]
 

@@ -98,14 +98,13 @@ def add_bots():
 	bots.append('http://www.google.com/search?hl=en&num=100&q=intext%3A%40&ie=utf-8')
 	return bots
 
-class Pyslow(object):
+class Pyslow:
 	def __init__(self,
 		        tgt,
 		        port,
 		        to,
 		        threads,
 		        sleep):
-	        super(Pyslow,self).__init__()
 		self.tgt = tgt
 		self.port = port
 		self.to = to

@@ -1,11 +1,11 @@
 # pyddos.py
 
 * This is my new update 
-* This script have 3 type of ddos attack : SYNFLOOD | REQUEST | Pyslow
-* Script has pyslow attack type which same like slowloris attack
+* This script have 3 type of ddos attacks : SYNFLOOD | REQUEST | Pyslow
+* Script has pyslow attack type which is similar to slowloris attack
 
 # Note
-* I worte this script for educational not for destructive purposes and illegal actions,so i won't responsible for that  
+* I wrote this script for educational not for destructive purposes and illegal actions, so I won't be responsible for that  
 
 
 # Requires module

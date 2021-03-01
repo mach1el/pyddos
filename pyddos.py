@@ -401,7 +401,7 @@ Example:
 			else:
 				ip = args.i
 			try:
-				for x in xrange(0,args.T):
+				for x in xrange(0,int(args.T)):
 					thread=Synflood(tgt,ip,sock=synsock)
 					thread.setDaemon(True)
 					thread.start()

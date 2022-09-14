@@ -15,6 +15,7 @@ title = '''
  Version:'''+version+''' 
 '''
 
+import re
 import os
 import sys
 import json
@@ -58,13 +59,12 @@ if os.name == 'nt':
 signal.signal(signal.SIGPIPE,signal.SIG_DFL)
 
 def fake_ip():
-	skip = '127'
-	rand = range(4)
-	for x in range(4):
-		rand[x] = randrange(0,256)
-	if rand[0] == skip:
-		fake_ip()
-	fkip = '%d.%d.%d.%d' % (rand[0],rand[1],rand[2],rand[3])
+	while True:
+		ips = [str(randrange(0,256)) for i in range(4)]
+		if ips[0] == "127":
+			continue
+		fkip = '.'.join(ips)
+		break
 	return fkip
 
 def check_tgt(args):
@@ -75,17 +75,13 @@ def check_tgt(args):
 		sys.exit(cprint('[-] Can\'t resolve host:Unknow host!','red'))
 	return ip
 
-
 def add_useragent():
-	uagents = []
-	uagents.append('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.124 Safari/537.36')
-	uagents.append('(Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.67 Safari/537.36')
-	uagents.append('Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25')
-	uagents.append('Opera/9.80 (X11; Linux i686; U; hu) Presto/2.9.168 Version/11.50')
-	uagents.append('Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)')
-	uagents.append('Mozilla/5.0 (X11; Linux x86_64; rv:28.0) Gecko/20100101  Firefox/28.0')
-	uagents.append('Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36 Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10')
-	uagents.append('Mozilla/5.0 (compatible; MSIE 10.0; Macintosh; Intel Mac OS X 10_7_3; Trident/6.0)')
+	try:
+		with open("./ua.txt","r") as fp:
+			uagents = re.findall(r"(.+)\n",fp.read())
+	except FileNotFoundError:
+		cprint('[-] No file named \'ua.txt\',failed to load User-Agents','yellow')
+		return []
 	return uagents
 
 def add_bots():

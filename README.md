@@ -27,7 +27,7 @@
          Github: http://github.com/t7hm1/pyddos                             
         Version:3.0 
 
-    usage: python3 pyddos.py -t [target] -p [port] -t [number threads]
+    usage: python3 pyddos.py -d [target] -p [port] -t [number threads]
 
     optional arguments:
     -h, --help       show this help message and exit

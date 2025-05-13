@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 
 version = '3.0'
-title = ""
-# title = '''
-#
-#       _ \        __ \  __ \               ___|           _)       |
-#      |   | |   | |   | |   |  _ \   __| \___ \   __|  __| | __ \  __|
-#      ___/  |   | |   | |   | (   |\__ \       | (    |    | |   | |
-#     _|    \__, |____/ ____/ \___/ ____/ _____/ \___|_|   _| .__/ \__|
-#            ____/                                            _|
-#
-#  DDos python script | Script used for testing ddos | Ddos attack
-#  Author: ___T7hM1___
-#  Github: http://github.com/t7hm1/pyddos
-#  Version:''' + version + '''
-# '''
+
+try:
+	title = r'''
+      _ \        __ \  __ \               ___|           _)       |
+     |   | |   | |   | |   |  _ \   __| \___ \   __|  __| | __ \  __|
+     ___/  |   | |   | |   | (   |\__ \       | (    |    | |   | |
+    _|    \__, |____/ ____/ \___/ ____/ _____/ \___|_|   _| .__/ \__|
+           ____/                                            _|
+
+    DDos python script | Script used for testing ddos | Ddos attack
+    Author: ___T7hM1___
+    Github: http://github.com/t7hm1/pyddos
+    Version: {}
+    '''.format(version)
+except SyntaxError:
+	title = ""
+
 
 import re
 import os

@@ -1,0 +1,10 @@
+from re import findall
+from termcolor import cprint
+def add_useragent():
+	try:
+		with open("./ua.txt","r") as fp:
+			uagents = findall(r"(.+)\n",fp.read())
+	except FileNotFoundError:
+		cprint('[-] No file named \'ua.txt\',failed to load User-Agents','yellow')
+		return []
+	return uagents
